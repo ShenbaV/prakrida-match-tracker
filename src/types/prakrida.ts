@@ -47,6 +47,7 @@ export interface Player {
   parentPhone?: string;
   isTemporary?: boolean;
   hasSibling?: boolean;
+  siblingGroupId?: string;
   isSpecial?: boolean;
 }
 
@@ -112,4 +113,14 @@ export interface AttendanceSession {
   teamId: string;
   coachId: string;
   records: AttendanceRecord[];
+}
+
+export interface GroundBooking {
+  id: string;
+  coachId: string;
+  coachName: string;
+  facilityId: string;
+  groundId: string;
+  date: string;
+  timeSlotId: string;
 }

@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import { X, Check, XCircle } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Player } from '@/types/prakrida';
 import { cn } from '@/lib/utils';
+import { Switch } from '@/components/ui/switch';
 
 interface PlayerCardProps {
   player: Player;
   isPresent: boolean;
   onToggle: (playerId: string) => void;
+  siblingName?: string;
 }
 
-const PlayerCard = ({ player, isPresent, onToggle }: PlayerCardProps) => {
+const PlayerCard = ({ player, isPresent, onToggle, siblingName }: PlayerCardProps) => {
   const [showEnlarged, setShowEnlarged] = useState(false);
 
   return (
@@ -17,45 +19,46 @@ const PlayerCard = ({ player, isPresent, onToggle }: PlayerCardProps) => {
       <div
         className={cn(
           'flex items-center gap-3 p-3 rounded-xl border transition-all duration-200',
-          isPresent ? 'bg-primary/5 border-primary/40 ring-1 ring-primary/20' : 'bg-card border-border',
+          isPresent ? 'bg-primary/5 border-primary/40' : 'bg-card border-border',
           player.isTemporary && 'border-dashed'
         )}
       >
         <button
           onClick={() => setShowEnlarged(true)}
-          className="w-12 h-12 rounded-full overflow-hidden border-2 border-border hover:border-primary transition-colors shrink-0"
+          className="w-11 h-11 rounded-full overflow-hidden border-2 border-border hover:border-primary transition-colors shrink-0"
         >
           <img src={player.photoUrl} alt={player.name} className="w-full h-full object-cover" />
         </button>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <span className="font-medium text-sm text-foreground truncate">{player.name}</span>
             <span className="text-[10px] font-mono text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">{player.studentId}</span>
+          </div>
+          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
             {player.isTemporary && (
               <span className="text-[10px] font-semibold bg-accent/20 text-accent px-1.5 py-0.5 rounded-full">TRIAL</span>
             )}
-            {player.hasSibling && (
-              <span className="text-[10px] font-semibold bg-secondary text-secondary-foreground px-1.5 py-0.5 rounded-full">SIB</span>
+            {player.hasSibling && siblingName && (
+              <span className="text-[10px] font-semibold bg-secondary text-secondary-foreground px-1.5 py-0.5 rounded-full">
+                👥 Sibling: {siblingName}
+              </span>
             )}
             {player.isSpecial && (
               <span className="text-[10px] font-semibold bg-destructive/20 text-destructive px-1.5 py-0.5 rounded-full">SPL</span>
             )}
           </div>
-          {player.age && <p className="text-xs text-muted-foreground">Age: {player.age}</p>}
         </div>
 
-        <button
-          onClick={() => onToggle(player.id)}
-          className={cn(
-            'w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 shrink-0 border-2',
-            isPresent
-              ? 'bg-primary text-primary-foreground border-primary shadow-md'
-              : 'bg-destructive/10 text-destructive border-destructive/30 hover:border-destructive/50'
-          )}
-        >
-          {isPresent ? <Check className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className={cn('text-xs font-medium', isPresent ? 'text-primary' : 'text-muted-foreground')}>
+            {isPresent ? 'Present' : 'Absent'}
+          </span>
+          <Switch
+            checked={isPresent}
+            onCheckedChange={() => onToggle(player.id)}
+          />
+        </div>
       </div>
 
       {/* Enlarged photo modal */}

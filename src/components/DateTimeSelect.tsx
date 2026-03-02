@@ -1,20 +1,23 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { CalendarIcon, Clock, Plus, Minus } from 'lucide-react';
+import { CalendarIcon, Clock, Plus, Minus, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { timeSlots } from '@/data/seed';
+import { timeSlots, groundBookings } from '@/data/seed';
 import { Input } from '@/components/ui/input';
 
 interface DateTimeSelectProps {
   onSelect: (date: string, timeSlotId: string, customTime?: { startTime: string; endTime: string; breakMinutes: number }) => void;
   initialDate?: string;
   initialTimeSlotId?: string;
+  facilityId?: string;
+  groundId?: string;
+  coachId?: string;
 }
 
-const DateTimeSelect = ({ onSelect, initialDate, initialTimeSlotId }: DateTimeSelectProps) => {
+const DateTimeSelect = ({ onSelect, initialDate, initialTimeSlotId, facilityId, groundId, coachId }: DateTimeSelectProps) => {
   const [date, setDate] = useState<Date | undefined>(
     initialDate ? new Date(initialDate + 'T00:00:00') : new Date()
   );
@@ -23,6 +26,16 @@ const DateTimeSelect = ({ onSelect, initialDate, initialTimeSlotId }: DateTimeSe
   const [customStart, setCustomStart] = useState('06:00');
   const [customEnd, setCustomEnd] = useState('08:00');
   const [breakMinutes, setBreakMinutes] = useState(0);
+
+  const dateStr = date ? format(date, 'yyyy-MM-dd') : '';
+
+  // Check booking conflicts for the selected date/ground
+  const getConflict = (slotId: string) => {
+    if (!facilityId || !groundId || !dateStr) return null;
+    return groundBookings.find(
+      b => b.facilityId === facilityId && b.groundId === groundId && b.date === dateStr && b.timeSlotId === slotId && b.coachId !== coachId
+    );
+  };
 
   const getCustomDuration = () => {
     const [sh, sm] = customStart.split(':').map(Number);
@@ -100,75 +113,67 @@ const DateTimeSelect = ({ onSelect, initialDate, initialTimeSlotId }: DateTimeSe
 
         {!isCustom ? (
           <div className="grid gap-2">
-            {timeSlots.map(slot => (
-              <button
-                key={slot.id}
-                onClick={() => setSelectedSlot(slot.id)}
-                className={cn(
-                  'w-full rounded-lg p-3 text-left border transition-all duration-150 flex items-center gap-3',
-                  selectedSlot === slot.id
-                    ? 'border-primary bg-primary/5 ring-1 ring-primary text-foreground'
-                    : 'border-border bg-card text-card-foreground hover:border-primary/30'
-                )}
-              >
-                <Clock className={cn('w-4 h-4', selectedSlot === slot.id ? 'text-primary' : 'text-muted-foreground')} />
-                <span className="text-sm font-medium">{slot.label}</span>
-                <span className="ml-auto text-xs text-muted-foreground">{slot.durationHours}h</span>
-              </button>
-            ))}
+            {timeSlots.map(slot => {
+              const conflict = getConflict(slot.id);
+              const isBooked = !!conflict;
+              return (
+                <button
+                  key={slot.id}
+                  onClick={() => !isBooked && setSelectedSlot(slot.id)}
+                  disabled={isBooked}
+                  className={cn(
+                    'w-full rounded-lg p-3 text-left border transition-all duration-150 flex items-center gap-3',
+                    isBooked
+                      ? 'border-destructive/30 bg-destructive/5 opacity-70 cursor-not-allowed'
+                      : selectedSlot === slot.id
+                        ? 'border-primary bg-primary/5 ring-1 ring-primary text-foreground'
+                        : 'border-border bg-card text-card-foreground hover:border-primary/30'
+                  )}
+                >
+                  {isBooked ? (
+                    <AlertTriangle className="w-4 h-4 text-destructive shrink-0" />
+                  ) : (
+                    <Clock className={cn('w-4 h-4', selectedSlot === slot.id ? 'text-primary' : 'text-muted-foreground')} />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <span className={cn('text-sm font-medium', isBooked && 'text-destructive')}>{slot.label}</span>
+                    {isBooked && (
+                      <p className="text-xs text-destructive mt-0.5">
+                        Booked by {conflict.coachName}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground">{slot.durationHours}h</span>
+                </button>
+              );
+            })}
           </div>
         ) : (
           <div className="space-y-4 rounded-xl border border-border bg-card p-4">
-            {/* Start & End */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Start Time</label>
-                <Input
-                  type="time"
-                  value={customStart}
-                  onChange={e => setCustomStart(e.target.value)}
-                  className="h-11"
-                />
+                <Input type="time" value={customStart} onChange={e => setCustomStart(e.target.value)} className="h-11" />
               </div>
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">End Time</label>
-                <Input
-                  type="time"
-                  value={customEnd}
-                  onChange={e => setCustomEnd(e.target.value)}
-                  className="h-11"
-                />
+                <Input type="time" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="h-11" />
               </div>
             </div>
 
-            {/* Break */}
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Break Duration</label>
               <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-9 w-9 shrink-0"
-                  onClick={() => setBreakMinutes(prev => Math.max(0, prev - 15))}
-                  disabled={breakMinutes <= 0}
-                >
+                <Button variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={() => setBreakMinutes(prev => Math.max(0, prev - 15))} disabled={breakMinutes <= 0}>
                   <Minus className="w-4 h-4" />
                 </Button>
-                <span className="text-sm font-semibold text-foreground min-w-[60px] text-center">
-                  {breakMinutes} min
-                </span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-9 w-9 shrink-0"
-                  onClick={() => setBreakMinutes(prev => prev + 15)}
-                >
+                <span className="text-sm font-semibold text-foreground min-w-[60px] text-center">{breakMinutes} min</span>
+                <Button variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={() => setBreakMinutes(prev => prev + 15)}>
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>
             </div>
 
-            {/* Summary */}
             {getCustomDuration() > 0 && (
               <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-sm space-y-1">
                 <div className="flex justify-between">
