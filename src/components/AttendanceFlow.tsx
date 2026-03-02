@@ -64,6 +64,7 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [fromHistory, setFromHistory] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showThanks, setShowThanks] = useState(false);
   const [showMonthlyBilling, setShowMonthlyBilling] = useState(false);
   const [sessionHistory, setSessionHistory] = useState<SessionHistory[]>([]);
 
@@ -114,7 +115,7 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
 
   const handleConfirmAttendance = () => {
     setShowConfirmDialog(false);
-    setStep(7);
+    setShowThanks(true);
   };
 
   const handleFinalSubmit = (recs: AttendanceRecord[]) => {
@@ -161,6 +162,7 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
     setSubmitted(false);
     setRecords([]);
     setFromHistory(false);
+    setShowThanks(false);
   };
 
   const handleHistorySelect = (session: SessionHistory) => {
@@ -169,9 +171,9 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
     setProgramId(session.programId);
     setTeamId(session.teamId);
     setTimeSlotId(session.timeSlotId);
-    setFromHistory(true);
+    setFromHistory(false);
     setDate('');
-    setStep(3);
+    setStep(1);
   };
 
   const handleCustomTeam = (teamName: string, playerIds: string[]) => {
@@ -205,6 +207,45 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
         onLogout={onLogout}
         onViewBilling={() => setShowMonthlyBilling(true)}
       />
+    );
+  }
+
+  if (showThanks) {
+    const presentPlayers = teamPlayers.filter(p => attendance[p.id]);
+    const facility = facilities.find(f => f.id === facilityId);
+    const ground = grounds.find(g => g.id === groundId);
+    const slot = timeSlots.find(s => s.id === timeSlotId);
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+        <div className="w-full max-w-sm animate-scale-in text-center space-y-5">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+              <CheckCircle2 className="w-10 h-10 text-primary" />
+            </div>
+            <h2 className="text-2xl font-display font-bold text-foreground">Attendance Marked!</h2>
+            <p className="text-muted-foreground text-sm">
+              {presentPlayers.length} player{presentPlayers.length !== 1 ? 's' : ''} marked present
+            </p>
+          </div>
+
+          <div className="bg-card rounded-xl border border-border p-4 text-left space-y-2">
+            <Row label="Facility" value={facility?.name || ''} />
+            <Row label="Ground" value={ground?.name || ''} />
+            <Row label="Date" value={date} />
+            <Row label="Time" value={slot?.label || ''} />
+            <Row label="Present" value={`${presentPlayers.length} / ${teamPlayers.length}`} highlight />
+          </div>
+
+          <p className="text-xs text-muted-foreground">Review the rate card and apply any discounts before final submission.</p>
+
+          <Button
+            onClick={() => { setShowThanks(false); setStep(7); }}
+            className="w-full h-12 text-base font-semibold"
+          >
+            View Rate Card →
+          </Button>
+        </div>
+      </div>
     );
   }
 
@@ -382,8 +423,14 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
               timeSlotId={timeSlotId}
               programId={programId}
               teamId={teamId}
+              coachId={coachId}
               coachName={coach?.name || ''}
+              onChangeFacility={(fId) => { setFacilityId(fId); setGroundId(''); }}
               onChangeGround={(gId) => setGroundId(gId)}
+              onChangeDate={(d) => setDate(d)}
+              onChangeTimeSlot={(tId) => setTimeSlotId(tId)}
+              onChangeProgram={(pId) => { setProgramId(pId); setTeamId(''); setCustomTeamPlayers([]); }}
+              onChangeTeam={(tId) => { setTeamId(tId); setCustomTeamPlayers([]); }}
             />
           </>
         )}

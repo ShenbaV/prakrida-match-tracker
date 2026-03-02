@@ -2,8 +2,10 @@ import { useState, useMemo } from 'react';
 import { SessionHistory } from '@/types/prakrida';
 import { facilities, grounds, programs, teams, timeSlots, coaches } from '@/data/seed';
 import { Button } from '@/components/ui/button';
-import { Plus, LogOut, MapPin, Clock, Calendar, User, History, Filter } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Plus, LogOut, MapPin, Clock, Calendar, User, History, Filter, X, TrendingUp } from 'lucide-react';
 import prakridaLogo from '@/assets/prakrida-logo.png';
+import { format, startOfWeek, startOfMonth } from 'date-fns';
 
 interface CoachDashboardProps {
   coachId: string;
@@ -14,7 +16,7 @@ interface CoachDashboardProps {
   onViewBilling: () => void;
 }
 
-type FilterPeriod = 'all' | '1week' | '1month';
+const today = format(new Date(), 'yyyy-MM-dd');
 
 const CoachDashboard = ({
   coachId,
@@ -24,19 +26,36 @@ const CoachDashboard = ({
   onLogout,
   onViewBilling,
 }: CoachDashboardProps) => {
-  const [filter, setFilter] = useState<FilterPeriod>('all');
+  const [showFilter, setShowFilter] = useState(false);
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+
   const coach = coaches.find(c => c.id === coachId);
 
-  const filteredHistory = useMemo(() => {
-    const now = Date.now();
-    const week = 7 * 24 * 60 * 60 * 1000;
-    const month = 30 * 24 * 60 * 60 * 1000;
+  const isFiltered = fromDate || toDate;
 
+  const clearFilter = () => {
+    setFromDate('');
+    setToDate('');
+    setShowFilter(false);
+  };
+
+  const applyQuickFilter = (days: number) => {
+    const from = new Date();
+    from.setDate(from.getDate() - days);
+    setFromDate(format(from, 'yyyy-MM-dd'));
+    setToDate(today);
+    setShowFilter(false);
+  };
+
+  const filteredHistory = useMemo(() => {
     let filtered = sessionHistory;
-    if (filter === '1week') {
-      filtered = sessionHistory.filter(s => now - s.timestamp < week);
-    } else if (filter === '1month') {
-      filtered = sessionHistory.filter(s => now - s.timestamp < month);
+
+    if (fromDate) {
+      filtered = filtered.filter(s => s.date >= fromDate);
+    }
+    if (toDate) {
+      filtered = filtered.filter(s => s.date <= toDate);
     }
 
     // Deduplicate
@@ -47,10 +66,20 @@ const CoachDashboard = ({
       seen.add(key);
       return true;
     });
-  }, [sessionHistory, filter]);
+  }, [sessionHistory, fromDate, toDate]);
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
+  const weekStart = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+  const monthStart = format(startOfMonth(new Date()), 'yyyy-MM-dd');
+  const totalSessions = sessionHistory.length;
+  const thisWeekSessions = sessionHistory.filter(s => s.date >= weekStart).length;
+  const thisMonthSessions = sessionHistory.filter(s => s.date >= monthStart).length;
+
+  const filterLabel = isFiltered
+    ? `${fromDate || '…'} → ${toDate || '…'}`
+    : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -76,30 +105,138 @@ const CoachDashboard = ({
           <p className="text-xs text-muted-foreground mt-1 font-mono">{coach?.phone}</p>
         </div>
 
+        {/* Session stats */}
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: 'This Week', value: thisWeekSessions },
+            { label: 'This Month', value: thisMonthSessions },
+            { label: 'Total', value: totalSessions },
+          ].map(({ label, value }) => (
+            <div key={label} className="bg-card rounded-xl border border-border p-3 text-center">
+              <p className="text-2xl font-display font-bold text-primary">{value}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">{label}</p>
+            </div>
+          ))}
+        </div>
+
         {/* Recent sessions */}
         {sessionHistory.length > 0 && (
           <div className="space-y-3">
+            {/* Section header */}
             <div className="flex items-center justify-between">
               <h3 className="font-display font-semibold text-foreground flex items-center gap-2">
                 <History className="w-4 h-4 text-primary" /> Recent Sessions
               </h3>
-              <div className="flex items-center gap-1">
-                <Filter className="w-3 h-3 text-muted-foreground" />
-                {(['all', '1week', '1month'] as FilterPeriod[]).map(f => (
+              <div className="flex items-center gap-2">
+                {isFiltered && (
                   <button
-                    key={f}
-                    onClick={() => setFilter(f)}
-                    className={`text-[10px] font-medium px-2 py-1 rounded-full transition-colors ${
-                      filter === f
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                    }`}
+                    onClick={clearFilter}
+                    className="flex items-center gap-1 text-[10px] font-medium text-destructive bg-destructive/10 px-2 py-1 rounded-full hover:bg-destructive/20 transition-colors"
                   >
-                    {f === 'all' ? 'All' : f === '1week' ? '1W' : '1M'}
+                    <X className="w-3 h-3" /> Clear
                   </button>
-                ))}
+                )}
+                <button
+                  onClick={() => setShowFilter(v => !v)}
+                  className={`flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-full transition-colors ${
+                    showFilter || isFiltered
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                  }`}
+                >
+                  <Filter className="w-3 h-3" />
+                  {filterLabel ?? 'Filter'}
+                </button>
               </div>
             </div>
+
+            {/* Filter panel */}
+            {showFilter && (
+              <div className="bg-card border border-border rounded-xl p-4 space-y-3 animate-fade-in">
+                {/* Quick presets */}
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Quick select</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {[
+                      { label: 'Today', days: 0 },
+                      { label: 'Last 7 days', days: 7 },
+                      { label: 'Last 30 days', days: 30 },
+                      { label: 'Last 90 days', days: 90 },
+                    ].map(({ label, days }) => (
+                      <button
+                        key={label}
+                        onClick={() => applyQuickFilter(days)}
+                        className="text-[11px] font-medium px-3 py-1.5 rounded-lg border border-border bg-secondary hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Custom date range */}
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Custom range</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block">From</label>
+                      <Input
+                        type="date"
+                        value={fromDate}
+                        max={toDate || today}
+                        onChange={e => setFromDate(e.target.value)}
+                        className="h-9 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block">To</label>
+                      <Input
+                        type="date"
+                        value={toDate}
+                        min={fromDate}
+                        max={today}
+                        onChange={e => setToDate(e.target.value)}
+                        className="h-9 text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    className="flex-1 text-xs h-8"
+                    onClick={() => setShowFilter(false)}
+                    disabled={!fromDate && !toDate}
+                  >
+                    Apply
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-8"
+                    onClick={clearFilter}
+                  >
+                    Clear
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Active filter badge */}
+            {isFiltered && !showFilter && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-secondary/50 rounded-lg px-3 py-2">
+                <Calendar className="w-3 h-3 shrink-0" />
+                <span>
+                  {fromDate && toDate
+                    ? `${fromDate} to ${toDate}`
+                    : fromDate
+                    ? `From ${fromDate}`
+                    : `Up to ${toDate}`}
+                </span>
+                <span className="ml-auto font-medium text-foreground">{filteredHistory.length} session{filteredHistory.length !== 1 ? 's' : ''}</span>
+              </div>
+            )}
 
             {filteredHistory.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-6">No sessions in this period</p>

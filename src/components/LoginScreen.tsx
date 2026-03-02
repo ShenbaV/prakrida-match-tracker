@@ -3,7 +3,7 @@ import { coaches } from '@/data/seed';
 import prakridaLogo from '@/assets/prakrida-logo.png';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Shield } from 'lucide-react';
+import { Shield, Eye, EyeOff } from 'lucide-react';
 
 interface LoginScreenProps {
   onLogin: (coachId: string) => void;
@@ -13,6 +13,7 @@ const LoginScreen = ({ onLogin }: LoginScreenProps) => {
   const [phone, setPhone] = useState('');
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
+  const [showPin, setShowPin] = useState(false);
 
   const handleLogin = () => {
     const coach = coaches.find(c => c.phone === phone && c.pin === pin);
@@ -53,15 +54,25 @@ const LoginScreen = ({ onLogin }: LoginScreenProps) => {
               onChange={e => { setPhone(e.target.value); setError(''); }}
               className="h-12 rounded-lg"
             />
-            <Input
-              placeholder="4-digit PIN"
-              type="password"
-              maxLength={4}
-              value={pin}
-              onChange={e => { setPin(e.target.value); setError(''); }}
-              className="h-12 rounded-lg"
-              onKeyDown={e => e.key === 'Enter' && handleLogin()}
-            />
+            <div className="relative">
+              <Input
+                placeholder="4-digit PIN"
+                type={showPin ? 'text' : 'password'}
+                maxLength={4}
+                value={pin}
+                onChange={e => { setPin(e.target.value); setError(''); }}
+                className="h-12 rounded-lg pr-11"
+                onKeyDown={e => e.key === 'Enter' && handleLogin()}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPin(prev => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                tabIndex={-1}
+              >
+                {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
 
           {error && (

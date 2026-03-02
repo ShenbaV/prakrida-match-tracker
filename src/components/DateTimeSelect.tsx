@@ -30,11 +30,48 @@ const DateTimeSelect = ({ onSelect, initialDate, initialTimeSlotId, facilityId, 
   const dateStr = date ? format(date, 'yyyy-MM-dd') : '';
 
   // Check booking conflicts for the selected date/ground
-  const getConflict = (slotId: string) => {
-    if (!facilityId || !groundId || !dateStr) return null;
+  const getConflict = (slotId: string, overrideDateStr?: string) => {
+    const d = overrideDateStr ?? dateStr;
+    if (!facilityId || !groundId || !d) return null;
     return groundBookings.find(
-      b => b.facilityId === facilityId && b.groundId === groundId && b.date === dateStr && b.timeSlotId === slotId && b.coachId !== coachId
-    );
+      b => b.facilityId === facilityId && b.groundId === groundId && b.date === d && b.timeSlotId === slotId && b.coachId !== coachId
+    ) ?? null;
+  };
+
+  // Check if a custom time range overlaps with any existing bookings on this ground/date
+  const toMinutes = (time: string) => {
+    const [h, m] = time.split(':').map(Number);
+    return h * 60 + m;
+  };
+
+  const getCustomConflicts = () => {
+    if (!facilityId || !groundId || !dateStr) return [];
+    const startMin = toMinutes(customStart);
+    const endMin = toMinutes(customEnd);
+    if (endMin <= startMin) return [];
+
+    return groundBookings
+      .filter(b => b.facilityId === facilityId && b.groundId === groundId && b.date === dateStr && b.coachId !== coachId)
+      .filter(b => {
+        const slot = timeSlots.find(s => s.id === b.timeSlotId);
+        if (!slot) return false;
+        const slotStart = toMinutes(slot.startTime);
+        const slotEnd = toMinutes(slot.endTime);
+        // Overlap: custom range and booked slot share any time
+        return startMin < slotEnd && endMin > slotStart;
+      })
+      .map(b => ({ ...b, slotLabel: timeSlots.find(s => s.id === b.timeSlotId)?.label ?? '' }));
+  };
+
+  // When date changes, clear selected slot if it's now booked on the new date
+  const handleDateChange = (newDate: Date | undefined) => {
+    setDate(newDate);
+    if (selectedSlot && newDate) {
+      const newDateStr = format(newDate, 'yyyy-MM-dd');
+      if (getConflict(selectedSlot, newDateStr)) {
+        setSelectedSlot('');
+      }
+    }
   };
 
   const getCustomDuration = () => {
@@ -66,7 +103,13 @@ const DateTimeSelect = ({ onSelect, initialDate, initialTimeSlotId, facilityId, 
     }
   };
 
-  const canContinue = date && (isCustom ? getCustomDuration() > 0 : !!selectedSlot);
+  const selectedSlotConflict = !isCustom && selectedSlot ? getConflict(selectedSlot) : null;
+  const customConflicts = isCustom && getCustomDuration() > 0 ? getCustomConflicts() : [];
+  const canContinue = date && (
+    isCustom
+      ? getCustomDuration() > 0 && customConflicts.length === 0
+      : !!selectedSlot && !selectedSlotConflict
+  );
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -84,7 +127,7 @@ const DateTimeSelect = ({ onSelect, initialDate, initialTimeSlotId, facilityId, 
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
-            <Calendar mode="single" selected={date} onSelect={setDate} initialFocus className="p-3 pointer-events-auto" />
+            <Calendar mode="single" selected={date} onSelect={handleDateChange} initialFocus className="p-3 pointer-events-auto" />
           </PopoverContent>
         </Popover>
       </div>
@@ -175,26 +218,63 @@ const DateTimeSelect = ({ onSelect, initialDate, initialTimeSlotId, facilityId, 
             </div>
 
             {getCustomDuration() > 0 && (
-              <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-sm space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Session</span>
-                  <span className="font-medium text-foreground">{formatTime12h(customStart)} – {formatTime12h(customEnd)}</span>
-                </div>
-                {breakMinutes > 0 && (
+              <>
+                {/* Session summary */}
+                <div className={cn(
+                  'rounded-lg p-3 text-sm space-y-1',
+                  customConflicts.length > 0
+                    ? 'bg-destructive/5 border border-destructive/30'
+                    : 'bg-primary/5 border border-primary/20'
+                )}>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Break</span>
-                    <span className="font-medium text-foreground">{breakMinutes} min</span>
+                    <span className="text-muted-foreground">Session</span>
+                    <span className="font-medium text-foreground">{formatTime12h(customStart)} – {formatTime12h(customEnd)}</span>
+                  </div>
+                  {breakMinutes > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Break</span>
+                      <span className="font-medium text-foreground">{breakMinutes} min</span>
+                    </div>
+                  )}
+                  <div className={cn(
+                    'flex justify-between border-t pt-1',
+                    customConflicts.length > 0 ? 'border-destructive/20' : 'border-primary/10'
+                  )}>
+                    <span className="text-muted-foreground">Active Duration</span>
+                    <span className={cn('font-semibold', customConflicts.length > 0 ? 'text-destructive' : 'text-primary')}>
+                      {getCustomDuration().toFixed(1)}h
+                    </span>
+                  </div>
+                </div>
+
+                {/* Overlap conflict warning */}
+                {customConflicts.length > 0 && (
+                  <div className="flex items-start gap-2 bg-destructive/10 border border-destructive/30 rounded-lg p-3 text-xs text-destructive">
+                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <p className="font-medium">Time overlap with existing booking{customConflicts.length > 1 ? 's' : ''}:</p>
+                      {customConflicts.map(c => (
+                        <p key={c.id}>• {c.slotLabel} — booked by <strong>{c.coachName}</strong></p>
+                      ))}
+                      <p className="mt-1 text-destructive/80">Please choose a different time.</p>
+                    </div>
                   </div>
                 )}
-                <div className="flex justify-between border-t border-primary/10 pt-1">
-                  <span className="text-muted-foreground">Active Duration</span>
-                  <span className="font-semibold text-primary">{getCustomDuration().toFixed(1)}h</span>
-                </div>
-              </div>
+              </>
             )}
           </div>
         )}
       </div>
+
+      {selectedSlotConflict && (
+        <div className="flex items-start gap-2 bg-destructive/10 border border-destructive/30 rounded-lg p-3 text-xs text-destructive">
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          <span>
+            This slot is already booked by <strong>{selectedSlotConflict.coachName}</strong> on this date and ground.
+            Please select a different time slot.
+          </span>
+        </div>
+      )}
 
       <Button onClick={handleContinue} disabled={!canContinue} className="w-full h-12 text-base font-semibold">
         Continue
