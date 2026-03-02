@@ -13,7 +13,7 @@ import ConfirmAttendanceDialog from '@/components/ConfirmAttendanceDialog';
 import SessionHistorySelect from '@/components/SessionHistorySelect';
 import MonthlyBilling from '@/components/MonthlyBilling';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, RotateCcw, FileText, Edit } from 'lucide-react';
+import { CheckCircle2, RotateCcw, FileText, Edit, LogOut } from 'lucide-react';
 import prakridaLogo from '@/assets/prakrida-logo.png';
 
 interface AttendanceFlowProps {
@@ -185,6 +185,7 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
       <MonthlyBilling
         sessions={getSavedSessions(coachId)}
         onBack={() => setShowMonthlyBilling(false)}
+        onLogout={onLogout}
       />
     );
   }
@@ -228,6 +229,9 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
             </Button>
             <Button variant="outline" onClick={() => setShowMonthlyBilling(true)} className="w-full h-12 gap-2">
               <FileText className="w-4 h-4" /> View Monthly Billing
+            </Button>
+            <Button variant="ghost" onClick={onLogout} className="w-full h-12 gap-2 text-destructive hover:text-destructive">
+              <LogOut className="w-4 h-4" /> Logout
             </Button>
           </div>
         </div>

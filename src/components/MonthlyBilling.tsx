@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 interface MonthlyBillingProps {
   sessions: AttendanceSession[];
   onBack: () => void;
+  onLogout?: () => void;
 }
 
 interface PlayerSummary {
@@ -26,7 +27,7 @@ interface PlayerSummary {
   ceoNotes: string;
 }
 
-const MonthlyBilling = ({ sessions, onBack }: MonthlyBillingProps) => {
+const MonthlyBilling = ({ sessions, onBack, onLogout }: MonthlyBillingProps) => {
   const [summaries, setSummaries] = useState<PlayerSummary[]>(() => {
     const playerMap = new Map<string, PlayerSummary>();
 
@@ -83,14 +84,19 @@ const MonthlyBilling = ({ sessions, onBack }: MonthlyBillingProps) => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="bg-card border-b border-border px-4 py-3 flex items-center gap-3 sticky top-0 z-10">
-        <button onClick={onBack} className="p-1">
-          <ArrowLeft className="w-5 h-5 text-foreground" />
-        </button>
-        <div>
-          <h2 className="font-display font-bold text-foreground">Monthly Billing</h2>
-          <p className="text-xs text-muted-foreground">{sessions.length} sessions recorded</p>
+      <div className="bg-card border-b border-border px-4 py-3 flex items-center justify-between sticky top-0 z-10">
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} className="p-1">
+            <ArrowLeft className="w-5 h-5 text-foreground" />
+          </button>
+          <div>
+            <h2 className="font-display font-bold text-foreground">Monthly Billing</h2>
+            <p className="text-xs text-muted-foreground">{sessions.length} sessions recorded</p>
+          </div>
         </div>
+        {onLogout && (
+          <button onClick={onLogout} className="text-xs text-destructive font-medium">Logout</button>
+        )}
       </div>
 
       <div className="max-w-md mx-auto p-4 space-y-4">
