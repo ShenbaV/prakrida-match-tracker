@@ -37,6 +37,7 @@ export interface Team {
 
 export interface Player {
   id: string;
+  studentId: string;
   name: string;
   teamId: string;
   programId: string;
@@ -47,6 +48,32 @@ export interface Player {
   isTemporary?: boolean;
   hasSibling?: boolean;
   isSpecial?: boolean;
+}
+
+export interface SessionHistory {
+  id: string;
+  coachId: string;
+  facilityId: string;
+  groundId: string;
+  date: string;
+  timeSlotId: string;
+  programId: string;
+  teamId: string;
+  timestamp: number;
+}
+
+export interface MonthlyBillingRecord {
+  playerId: string;
+  playerName: string;
+  studentId: string;
+  programName: string;
+  sessionsAttended: number;
+  totalAmount: number;
+  discountAmount: number;
+  finalAmount: number;
+  discountNotes: string[];
+  ceoApproved: boolean;
+  ceoNotes?: string;
 }
 
 export interface RateCard {
