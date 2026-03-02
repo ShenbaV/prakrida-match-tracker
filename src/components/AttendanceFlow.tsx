@@ -13,7 +13,7 @@ import ConfirmAttendanceDialog from '@/components/ConfirmAttendanceDialog';
 import SessionHistorySelect from '@/components/SessionHistorySelect';
 import MonthlyBilling from '@/components/MonthlyBilling';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, RotateCcw, FileText } from 'lucide-react';
+import { CheckCircle2, RotateCcw, FileText, Edit } from 'lucide-react';
 import prakridaLogo from '@/assets/prakrida-logo.png';
 
 interface AttendanceFlowProps {
@@ -60,6 +60,7 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
   const [attendance, setAttendance] = useState<Record<string, boolean>>({});
   const [submitted, setSubmitted] = useState(false);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [fromHistory, setFromHistory] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showMonthlyBilling, setShowMonthlyBilling] = useState(false);
   const [sessionHistory, setSessionHistory] = useState<SessionHistory[]>([]);
@@ -70,6 +71,36 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
   useEffect(() => {
     setSessionHistory(getSessionHistory(coachId));
   }, [coachId]);
+
+  // Auto-advance to step 1 if no history (avoid side-effect in render)
+  useEffect(() => {
+    if (step === 0 && sessionHistory.length === 0 && !submitted) {
+      // Small delay to let sessionHistory load
+      const timer = setTimeout(() => {
+        const history = getSessionHistory(coachId);
+        if (history.length === 0) setStep(1);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [step, sessionHistory.length, coachId, submitted]);
+
+  const selectAllPresent = () => {
+    const newAttendance: Record<string, boolean> = {};
+    teamPlayers.forEach(p => { newAttendance[p.id] = true; });
+    setAttendance(newAttendance);
+  };
+
+  const deselectAll = () => {
+    setAttendance({});
+  };
+
+  const isDuplicateSession = (): boolean => {
+    const sessions = getSavedSessions(coachId);
+    return sessions.some(s =>
+      s.teamId === teamId && s.date === date && s.timeSlotId === timeSlotId &&
+      s.facilityId === facilityId && s.groundId === groundId
+    );
+  };
 
   const toggleAttendance = (playerId: string) => {
     setAttendance(prev => ({ ...prev, [playerId]: !prev[playerId] }));
@@ -134,16 +165,19 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
     setAttendance({});
     setSubmitted(false);
     setRecords([]);
+    setFromHistory(false);
   };
 
   const handleHistorySelect = (session: SessionHistory) => {
     setFacilityId(session.facilityId);
     setGroundId(session.groundId);
-    setDate(session.date);
-    setTimeSlotId(session.timeSlotId);
     setProgramId(session.programId);
     setTeamId(session.teamId);
-    setStep(6); // Jump to attendance marking
+    setTimeSlotId(session.timeSlotId);
+    setFromHistory(true);
+    // Don't prefill date — it changes daily, let coach pick today's date
+    setDate('');
+    setStep(3); // Jump to Date & Time step so coach confirms today's date/time
   };
 
   if (showMonthlyBilling) {
@@ -189,6 +223,9 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
             <Button onClick={resetFlow} className="w-full h-12 text-base font-semibold">
               <RotateCcw className="w-4 h-4 mr-2" /> New Session
             </Button>
+            <Button variant="secondary" onClick={() => { setSubmitted(false); setStep(6); }} className="w-full h-12 gap-2">
+              <Edit className="w-4 h-4" /> Edit This Session
+            </Button>
             <Button variant="outline" onClick={() => setShowMonthlyBilling(true)} className="w-full h-12 gap-2">
               <FileText className="w-4 h-4" /> View Monthly Billing
             </Button>
@@ -216,19 +253,12 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
       </div>
 
       <div className="max-w-md mx-auto p-4 pb-8">
-        {step === 0 && (
-          <>
-            {sessionHistory.length > 0 ? (
-              <SessionHistorySelect
-                history={sessionHistory}
-                onSelectHistory={handleHistorySelect}
-                onStartFresh={() => setStep(1)}
-              />
-            ) : (
-              // No history, go directly to step 1
-              (() => { setStep(1); return null; })()
-            )}
-          </>
+        {step === 0 && sessionHistory.length > 0 && (
+          <SessionHistorySelect
+            history={sessionHistory}
+            onSelectHistory={handleHistorySelect}
+            onStartFresh={() => setStep(1)}
+          />
         )}
 
         {step === 1 && (
@@ -247,8 +277,8 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
 
         {step === 3 && (
           <>
-            <StepHeader step={3} totalSteps={TOTAL_STEPS} title="Date & Time" subtitle="When is this session?" onBack={() => setStep(2)} />
-            <DateTimeSelect onSelect={(d, t) => { setDate(d); setTimeSlotId(t); setStep(4); }} />
+            <StepHeader step={3} totalSteps={TOTAL_STEPS} title="Date & Time" subtitle={fromHistory ? "Confirm today's date & time" : "When is this session?"} onBack={() => setStep(fromHistory ? 0 : 2)} />
+            <DateTimeSelect onSelect={(d, t) => { setDate(d); setTimeSlotId(t); setStep(fromHistory ? 6 : 4); }} />
           </>
         )}
 
@@ -269,6 +299,19 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
         {step === 6 && (
           <>
             <StepHeader step={6} totalSteps={TOTAL_STEPS} title="Mark Attendance" subtitle={`${presentCount} of ${teamPlayers.length} present`} onBack={() => setStep(5)} />
+            <div className="flex gap-2 mb-3">
+              <Button variant="outline" size="sm" onClick={selectAllPresent} className="text-xs flex-1">
+                ✅ Select All Present
+              </Button>
+              <Button variant="outline" size="sm" onClick={deselectAll} className="text-xs flex-1">
+                ❌ Deselect All
+              </Button>
+            </div>
+            {isDuplicateSession() && (
+              <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 mb-3 text-xs text-destructive font-medium">
+                ⚠️ Attendance already submitted for this team/date/slot. Submitting again will create a duplicate entry.
+              </div>
+            )}
             <div className="space-y-2 mb-4">
               {teamPlayers.map(player => (
                 <PlayerCard
