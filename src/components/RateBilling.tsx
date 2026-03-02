@@ -94,6 +94,7 @@ const RateBilling = ({ players, attendance, baseRate, onSubmit, onBack }: RateBi
               <div className="flex items-center gap-3">
                 <img src={player.photoUrl} alt={player.name} className="w-8 h-8 rounded-full" />
                 <span className="font-medium text-sm text-card-foreground flex-1">{player.name}</span>
+                <span className="text-[10px] font-mono text-muted-foreground mr-2">{player.studentId}</span>
                 <span className={cn('font-display font-bold', hasDiscount ? 'text-success' : 'text-foreground')}>
                   ₹{finalAmt}
                 </span>

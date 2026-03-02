@@ -52,38 +52,38 @@ const avatarBase = 'https://api.dicebear.com/7.x/avataaars/svg?seed=';
 
 export const players: Player[] = [
   // U-10 A Team
-  { id: 'pl1', name: 'Arjun Reddy', teamId: 'tm1', programId: 'p1', photoUrl: `${avatarBase}arjun`, age: 9, parentName: 'Suresh Reddy', parentPhone: '9876543210' },
-  { id: 'pl2', name: 'Meera Nair', teamId: 'tm1', programId: 'p1', photoUrl: `${avatarBase}meera`, age: 10, parentName: 'Priya Nair', parentPhone: '9876543211' },
-  { id: 'pl3', name: 'Karthik Iyer', teamId: 'tm1', programId: 'p1', photoUrl: `${avatarBase}karthik`, age: 9, parentName: 'Ramesh Iyer', parentPhone: '9876543212', hasSibling: true },
-  { id: 'pl4', name: 'Ananya Sharma', teamId: 'tm1', programId: 'p1', photoUrl: `${avatarBase}ananya`, age: 8, parentName: 'Vikram Sharma', parentPhone: '9876543213' },
-  { id: 'pl5', name: 'Rohan Das', teamId: 'tm1', programId: 'p1', photoUrl: `${avatarBase}rohan`, age: 10, parentName: 'Amit Das', parentPhone: '9876543214' },
+  { id: 'pl1', studentId: 'PRA-U10-001', name: 'Arjun Reddy', teamId: 'tm1', programId: 'p1', photoUrl: `${avatarBase}arjun`, age: 9, parentName: 'Suresh Reddy', parentPhone: '9876543210' },
+  { id: 'pl2', studentId: 'PRA-U10-002', name: 'Meera Nair', teamId: 'tm1', programId: 'p1', photoUrl: `${avatarBase}meera`, age: 10, parentName: 'Priya Nair', parentPhone: '9876543211' },
+  { id: 'pl3', studentId: 'PRA-U10-003', name: 'Karthik Iyer', teamId: 'tm1', programId: 'p1', photoUrl: `${avatarBase}karthik`, age: 9, parentName: 'Ramesh Iyer', parentPhone: '9876543212', hasSibling: true },
+  { id: 'pl4', studentId: 'PRA-U10-004', name: 'Ananya Sharma', teamId: 'tm1', programId: 'p1', photoUrl: `${avatarBase}ananya`, age: 8, parentName: 'Vikram Sharma', parentPhone: '9876543213' },
+  { id: 'pl5', studentId: 'PRA-U10-005', name: 'Rohan Das', teamId: 'tm1', programId: 'p1', photoUrl: `${avatarBase}rohan`, age: 10, parentName: 'Amit Das', parentPhone: '9876543214' },
   // U-10 B Team
-  { id: 'pl6', name: 'Priya Rao', teamId: 'tm2', programId: 'p1', photoUrl: `${avatarBase}priya`, age: 9, parentName: 'Sanjay Rao', parentPhone: '9876543215' },
-  { id: 'pl7', name: 'Dhruv Menon', teamId: 'tm2', programId: 'p1', photoUrl: `${avatarBase}dhruv`, age: 8, parentName: 'Anil Menon', parentPhone: '9876543216', hasSibling: true },
-  { id: 'pl8', name: 'Sneha Pillai', teamId: 'tm2', programId: 'p1', photoUrl: `${avatarBase}sneha`, age: 10, parentName: 'Rajesh Pillai', parentPhone: '9876543217' },
+  { id: 'pl6', studentId: 'PRA-U10-006', name: 'Priya Rao', teamId: 'tm2', programId: 'p1', photoUrl: `${avatarBase}priya`, age: 9, parentName: 'Sanjay Rao', parentPhone: '9876543215' },
+  { id: 'pl7', studentId: 'PRA-U10-007', name: 'Dhruv Menon', teamId: 'tm2', programId: 'p1', photoUrl: `${avatarBase}dhruv`, age: 8, parentName: 'Anil Menon', parentPhone: '9876543216', hasSibling: true },
+  { id: 'pl8', studentId: 'PRA-U10-008', name: 'Sneha Pillai', teamId: 'tm2', programId: 'p1', photoUrl: `${avatarBase}sneha`, age: 10, parentName: 'Rajesh Pillai', parentPhone: '9876543217' },
   // U-14 A Team
-  { id: 'pl9', name: 'Vikram Singh', teamId: 'tm3', programId: 'p2', photoUrl: `${avatarBase}vikram`, age: 13, parentName: 'Harinder Singh', parentPhone: '9876543218' },
-  { id: 'pl10', name: 'Aditi Kulkarni', teamId: 'tm3', programId: 'p2', photoUrl: `${avatarBase}aditi`, age: 14, parentName: 'Shashi Kulkarni', parentPhone: '9876543219' },
-  { id: 'pl11', name: 'Ravi Kumar', teamId: 'tm3', programId: 'p2', photoUrl: `${avatarBase}ravi`, age: 12, parentName: 'Sunil Kumar', parentPhone: '9876543220', isSpecial: true },
-  { id: 'pl12', name: 'Ishaan Gupta', teamId: 'tm3', programId: 'p2', photoUrl: `${avatarBase}ishaan`, age: 13, parentName: 'Neha Gupta', parentPhone: '9876543221' },
-  { id: 'pl13', name: 'Tanvi Deshmukh', teamId: 'tm3', programId: 'p2', photoUrl: `${avatarBase}tanvi`, age: 14, parentName: 'Raj Deshmukh', parentPhone: '9876543222' },
-  { id: 'pl14', name: 'Sahil Iyer', teamId: 'tm3', programId: 'p2', photoUrl: `${avatarBase}sahilI`, age: 12, parentName: 'Ramesh Iyer', parentPhone: '9876543212', hasSibling: true },
+  { id: 'pl9', studentId: 'PRA-U14-001', name: 'Vikram Singh', teamId: 'tm3', programId: 'p2', photoUrl: `${avatarBase}vikram`, age: 13, parentName: 'Harinder Singh', parentPhone: '9876543218' },
+  { id: 'pl10', studentId: 'PRA-U14-002', name: 'Aditi Kulkarni', teamId: 'tm3', programId: 'p2', photoUrl: `${avatarBase}aditi`, age: 14, parentName: 'Shashi Kulkarni', parentPhone: '9876543219' },
+  { id: 'pl11', studentId: 'PRA-U14-003', name: 'Ravi Kumar', teamId: 'tm3', programId: 'p2', photoUrl: `${avatarBase}ravi`, age: 12, parentName: 'Sunil Kumar', parentPhone: '9876543220', isSpecial: true },
+  { id: 'pl12', studentId: 'PRA-U14-004', name: 'Ishaan Gupta', teamId: 'tm3', programId: 'p2', photoUrl: `${avatarBase}ishaan`, age: 13, parentName: 'Neha Gupta', parentPhone: '9876543221' },
+  { id: 'pl13', studentId: 'PRA-U14-005', name: 'Tanvi Deshmukh', teamId: 'tm3', programId: 'p2', photoUrl: `${avatarBase}tanvi`, age: 14, parentName: 'Raj Deshmukh', parentPhone: '9876543222' },
+  { id: 'pl14', studentId: 'PRA-U14-006', name: 'Sahil Iyer', teamId: 'tm3', programId: 'p2', photoUrl: `${avatarBase}sahilI`, age: 12, parentName: 'Ramesh Iyer', parentPhone: '9876543212', hasSibling: true },
   // U-14 B Team
-  { id: 'pl15', name: 'Neha Patel', teamId: 'tm4', programId: 'p2', photoUrl: `${avatarBase}nehaP`, age: 13, parentName: 'Dinesh Patel', parentPhone: '9876543223' },
-  { id: 'pl16', name: 'Aakash Joshi', teamId: 'tm4', programId: 'p2', photoUrl: `${avatarBase}aakash`, age: 14, parentName: 'Manish Joshi', parentPhone: '9876543224' },
+  { id: 'pl15', studentId: 'PRA-U14-007', name: 'Neha Patel', teamId: 'tm4', programId: 'p2', photoUrl: `${avatarBase}nehaP`, age: 13, parentName: 'Dinesh Patel', parentPhone: '9876543223' },
+  { id: 'pl16', studentId: 'PRA-U14-008', name: 'Aakash Joshi', teamId: 'tm4', programId: 'p2', photoUrl: `${avatarBase}aakash`, age: 14, parentName: 'Manish Joshi', parentPhone: '9876543224' },
   // FFF Seniors Group 1
-  { id: 'pl17', name: 'Rajesh Menon', teamId: 'tm9', programId: 'p5', photoUrl: `${avatarBase}rajesh`, age: 35 },
-  { id: 'pl18', name: 'Suresh Hegde', teamId: 'tm9', programId: 'p5', photoUrl: `${avatarBase}suresh`, age: 42 },
-  { id: 'pl19', name: 'Prakash Rao', teamId: 'tm9', programId: 'p5', photoUrl: `${avatarBase}prakash`, age: 38 },
-  { id: 'pl20', name: 'Anil Shetty', teamId: 'tm9', programId: 'p5', photoUrl: `${avatarBase}anil`, age: 29 },
-  { id: 'pl21', name: 'Venkat Raman', teamId: 'tm9', programId: 'p5', photoUrl: `${avatarBase}venkat`, age: 45 },
-  { id: 'pl22', name: 'Deepak Murthy', teamId: 'tm9', programId: 'p5', photoUrl: `${avatarBase}deepak`, age: 33 },
+  { id: 'pl17', studentId: 'PRA-SR-001', name: 'Rajesh Menon', teamId: 'tm9', programId: 'p5', photoUrl: `${avatarBase}rajesh`, age: 35 },
+  { id: 'pl18', studentId: 'PRA-SR-002', name: 'Suresh Hegde', teamId: 'tm9', programId: 'p5', photoUrl: `${avatarBase}suresh`, age: 42 },
+  { id: 'pl19', studentId: 'PRA-SR-003', name: 'Prakash Rao', teamId: 'tm9', programId: 'p5', photoUrl: `${avatarBase}prakash`, age: 38 },
+  { id: 'pl20', studentId: 'PRA-SR-004', name: 'Anil Shetty', teamId: 'tm9', programId: 'p5', photoUrl: `${avatarBase}anil`, age: 29 },
+  { id: 'pl21', studentId: 'PRA-SR-005', name: 'Venkat Raman', teamId: 'tm9', programId: 'p5', photoUrl: `${avatarBase}venkat`, age: 45 },
+  { id: 'pl22', studentId: 'PRA-SR-006', name: 'Deepak Murthy', teamId: 'tm9', programId: 'p5', photoUrl: `${avatarBase}deepak`, age: 33 },
   // Women's Program
-  { id: 'pl23', name: 'Kavitha Nair', teamId: 'tm11', programId: 'p6', photoUrl: `${avatarBase}kavitha`, age: 28 },
-  { id: 'pl24', name: 'Divya Krishnan', teamId: 'tm11', programId: 'p6', photoUrl: `${avatarBase}divya`, age: 25 },
-  { id: 'pl25', name: 'Lakshmi Devi', teamId: 'tm11', programId: 'p6', photoUrl: `${avatarBase}lakshmi`, age: 30 },
+  { id: 'pl23', studentId: 'PRA-WM-001', name: 'Kavitha Nair', teamId: 'tm11', programId: 'p6', photoUrl: `${avatarBase}kavitha`, age: 28 },
+  { id: 'pl24', studentId: 'PRA-WM-002', name: 'Divya Krishnan', teamId: 'tm11', programId: 'p6', photoUrl: `${avatarBase}divya`, age: 25 },
+  { id: 'pl25', studentId: 'PRA-WM-003', name: 'Lakshmi Devi', teamId: 'tm11', programId: 'p6', photoUrl: `${avatarBase}lakshmi`, age: 30 },
   // Temporary member
-  { id: 'pl26', name: 'Trial - Akash M', teamId: 'tm3', programId: 'p2', photoUrl: `${avatarBase}akashM`, age: 13, isTemporary: true, parentName: 'Mohan M', parentPhone: '9876543230' },
+  { id: 'pl26', studentId: 'PRA-TMP-001', name: 'Trial - Akash M', teamId: 'tm3', programId: 'p2', photoUrl: `${avatarBase}akashM`, age: 13, isTemporary: true, parentName: 'Mohan M', parentPhone: '9876543230' },
 ];
 
 export const rateCards: RateCard[] = [

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Player, AttendanceRecord } from '@/types/prakrida';
+import { useState, useEffect } from 'react';
+import { Player, AttendanceRecord, AttendanceSession, SessionHistory } from '@/types/prakrida';
 import { players as allPlayers, rateCards, timeSlots, facilities, grounds, programs, teams, coaches } from '@/data/seed';
 import StepHeader from '@/components/StepHeader';
 import FacilitySelect from '@/components/FacilitySelect';
@@ -9,8 +9,11 @@ import ProgramSelect from '@/components/ProgramSelect';
 import TeamSelect from '@/components/TeamSelect';
 import PlayerCard from '@/components/PlayerCard';
 import RateBilling from '@/components/RateBilling';
+import ConfirmAttendanceDialog from '@/components/ConfirmAttendanceDialog';
+import SessionHistorySelect from '@/components/SessionHistorySelect';
+import MonthlyBilling from '@/components/MonthlyBilling';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, RotateCcw } from 'lucide-react';
+import { CheckCircle2, RotateCcw, FileText } from 'lucide-react';
 import prakridaLogo from '@/assets/prakrida-logo.png';
 
 interface AttendanceFlowProps {
@@ -20,8 +23,34 @@ interface AttendanceFlowProps {
 
 const TOTAL_STEPS = 7;
 
+const getSessionHistory = (coachId: string): SessionHistory[] => {
+  try {
+    const stored = localStorage.getItem(`prakrida_history_${coachId}`);
+    return stored ? JSON.parse(stored) : [];
+  } catch { return []; }
+};
+
+const saveSessionHistory = (coachId: string, session: SessionHistory) => {
+  const history = getSessionHistory(coachId);
+  history.unshift(session);
+  localStorage.setItem(`prakrida_history_${coachId}`, JSON.stringify(history.slice(0, 20)));
+};
+
+const getSavedSessions = (coachId: string): AttendanceSession[] => {
+  try {
+    const stored = localStorage.getItem(`prakrida_sessions_${coachId}`);
+    return stored ? JSON.parse(stored) : [];
+  } catch { return []; }
+};
+
+const saveAttendanceSession = (coachId: string, session: AttendanceSession) => {
+  const sessions = getSavedSessions(coachId);
+  sessions.push(session);
+  localStorage.setItem(`prakrida_sessions_${coachId}`, JSON.stringify(sessions));
+};
+
 const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0); // 0 = history select
   const [facilityId, setFacilityId] = useState('');
   const [groundId, setGroundId] = useState('');
   const [date, setDate] = useState('');
@@ -31,9 +60,16 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
   const [attendance, setAttendance] = useState<Record<string, boolean>>({});
   const [submitted, setSubmitted] = useState(false);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showMonthlyBilling, setShowMonthlyBilling] = useState(false);
+  const [sessionHistory, setSessionHistory] = useState<SessionHistory[]>([]);
 
   const coach = coaches.find(c => c.id === coachId);
   const teamPlayers = allPlayers.filter(p => p.teamId === teamId);
+
+  useEffect(() => {
+    setSessionHistory(getSessionHistory(coachId));
+  }, [coachId]);
 
   const toggleAttendance = (playerId: string) => {
     setAttendance(prev => ({ ...prev, [playerId]: !prev[playerId] }));
@@ -49,13 +85,46 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
     return rc?.ratePerSession || 500;
   };
 
+  const handleConfirmAttendance = () => {
+    setShowConfirmDialog(false);
+    setStep(7);
+  };
+
   const handleFinalSubmit = (recs: AttendanceRecord[]) => {
     setRecords(recs);
     setSubmitted(true);
+
+    // Save to history
+    const historyEntry: SessionHistory = {
+      id: `sh_${Date.now()}`,
+      coachId,
+      facilityId,
+      groundId,
+      date,
+      timeSlotId,
+      programId,
+      teamId,
+      timestamp: Date.now(),
+    };
+    saveSessionHistory(coachId, historyEntry);
+
+    // Save attendance session for monthly billing
+    const session: AttendanceSession = {
+      facilityId,
+      groundId,
+      date,
+      timeSlotId,
+      programId,
+      teamId,
+      coachId,
+      records: recs,
+    };
+    saveAttendanceSession(coachId, session);
+    setSessionHistory(getSessionHistory(coachId));
   };
 
   const resetFlow = () => {
-    setStep(1);
+    setStep(0);
     setFacilityId('');
     setGroundId('');
     setDate('');
@@ -66,6 +135,25 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
     setSubmitted(false);
     setRecords([]);
   };
+
+  const handleHistorySelect = (session: SessionHistory) => {
+    setFacilityId(session.facilityId);
+    setGroundId(session.groundId);
+    setDate(session.date);
+    setTimeSlotId(session.timeSlotId);
+    setProgramId(session.programId);
+    setTeamId(session.teamId);
+    setStep(6); // Jump to attendance marking
+  };
+
+  if (showMonthlyBilling) {
+    return (
+      <MonthlyBilling
+        sessions={getSavedSessions(coachId)}
+        onBack={() => setShowMonthlyBilling(false)}
+      />
+    );
+  }
 
   if (submitted) {
     const presentRecs = records.filter(r => r.present);
@@ -97,9 +185,14 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
             </div>
           </div>
 
-          <Button onClick={resetFlow} className="w-full h-12 text-base font-semibold">
-            <RotateCcw className="w-4 h-4 mr-2" /> New Session
-          </Button>
+          <div className="space-y-3">
+            <Button onClick={resetFlow} className="w-full h-12 text-base font-semibold">
+              <RotateCcw className="w-4 h-4 mr-2" /> New Session
+            </Button>
+            <Button variant="outline" onClick={() => setShowMonthlyBilling(true)} className="w-full h-12 gap-2">
+              <FileText className="w-4 h-4" /> View Monthly Billing
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -114,12 +207,30 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
           <span className="font-display font-bold text-sm text-foreground">Prakrida</span>
         </div>
         <div className="flex items-center gap-3">
+          <button onClick={() => setShowMonthlyBilling(true)} className="text-xs text-primary font-medium">
+            <FileText className="w-4 h-4 inline mr-1" />Billing
+          </button>
           <span className="text-xs text-muted-foreground">{coach?.name}</span>
           <button onClick={onLogout} className="text-xs text-destructive font-medium">Logout</button>
         </div>
       </div>
 
       <div className="max-w-md mx-auto p-4 pb-8">
+        {step === 0 && (
+          <>
+            {sessionHistory.length > 0 ? (
+              <SessionHistorySelect
+                history={sessionHistory}
+                onSelectHistory={handleHistorySelect}
+                onStartFresh={() => setStep(1)}
+              />
+            ) : (
+              // No history, go directly to step 1
+              (() => { setStep(1); return null; })()
+            )}
+          </>
+        )}
+
         {step === 1 && (
           <>
             <StepHeader step={1} totalSteps={TOTAL_STEPS} title="Select Facility" subtitle="Choose the training location" />
@@ -172,12 +283,20 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
               <p className="text-center text-muted-foreground py-8">No players found for this team</p>
             )}
             <Button
-              onClick={() => setStep(7)}
+              onClick={() => setShowConfirmDialog(true)}
               disabled={presentCount === 0}
               className="w-full h-12 text-base font-semibold"
             >
               Continue to Billing ({presentCount} present)
             </Button>
+
+            <ConfirmAttendanceDialog
+              open={showConfirmDialog}
+              onConfirm={handleConfirmAttendance}
+              onCancel={() => setShowConfirmDialog(false)}
+              presentPlayers={teamPlayers.filter(p => attendance[p.id])}
+              absentPlayers={teamPlayers.filter(p => !attendance[p.id])}
+            />
           </>
         )}
 

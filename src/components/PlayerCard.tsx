@@ -29,8 +29,9 @@ const PlayerCard = ({ player, isPresent, onToggle }: PlayerCardProps) => {
         </button>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="font-medium text-sm text-foreground truncate">{player.name}</span>
+            <span className="text-[10px] font-mono text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">{player.studentId}</span>
             {player.isTemporary && (
               <span className="text-[10px] font-semibold bg-accent/20 text-accent px-1.5 py-0.5 rounded-full">TRIAL</span>
             )}
@@ -72,6 +73,7 @@ const PlayerCard = ({ player, isPresent, onToggle }: PlayerCardProps) => {
             </button>
             <img src={player.photoUrl} alt={player.name} className="w-48 h-48 rounded-xl mx-auto mb-3 object-cover" />
             <h3 className="font-display font-bold text-lg text-center text-card-foreground">{player.name}</h3>
+            <p className="text-center text-xs font-mono text-muted-foreground">{player.studentId}</p>
             {player.age && <p className="text-center text-sm text-muted-foreground">Age: {player.age}</p>}
             {player.parentName && <p className="text-center text-xs text-muted-foreground mt-1">Parent: {player.parentName}</p>}
           </div>
