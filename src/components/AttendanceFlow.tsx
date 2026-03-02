@@ -282,7 +282,7 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
         {step === 3 && (
           <>
             <StepHeader step={3} totalSteps={TOTAL_STEPS} title="Date & Time" subtitle={fromHistory ? "Confirm today's date & time" : "When is this session?"} onBack={() => setStep(fromHistory ? 0 : 2)} />
-            <DateTimeSelect onSelect={(d, t) => { setDate(d); setTimeSlotId(t); setStep(fromHistory ? 6 : 4); }} />
+            <DateTimeSelect initialTimeSlotId={fromHistory ? timeSlotId : undefined} onSelect={(d, t) => { setDate(d); setTimeSlotId(t); setStep(fromHistory ? 6 : 4); }} />
           </>
         )}
 

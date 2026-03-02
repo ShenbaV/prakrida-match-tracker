@@ -9,11 +9,15 @@ import { timeSlots } from '@/data/seed';
 
 interface DateTimeSelectProps {
   onSelect: (date: string, timeSlotId: string) => void;
+  initialDate?: string;
+  initialTimeSlotId?: string;
 }
 
-const DateTimeSelect = ({ onSelect }: DateTimeSelectProps) => {
-  const [date, setDate] = useState<Date | undefined>(new Date());
-  const [selectedSlot, setSelectedSlot] = useState<string>('');
+const DateTimeSelect = ({ onSelect, initialDate, initialTimeSlotId }: DateTimeSelectProps) => {
+  const [date, setDate] = useState<Date | undefined>(
+    initialDate ? new Date(initialDate + 'T00:00:00') : new Date()
+  );
+  const [selectedSlot, setSelectedSlot] = useState<string>(initialTimeSlotId || '');
 
   const handleContinue = () => {
     if (date && selectedSlot) {
