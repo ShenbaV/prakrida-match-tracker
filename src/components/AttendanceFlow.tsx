@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Player, AttendanceRecord, AttendanceSession, SessionHistory } from '@/types/prakrida';
-import { players as allPlayers, rateCards, timeSlots, facilities, grounds, programs, teams, coaches } from '@/data/seed';
+import { players as allPlayers, rateCards, timeSlots, facilities, grounds, programs, teams, coaches, getSiblings } from '@/data/seed';
 import StepHeader from '@/components/StepHeader';
 import FacilitySelect from '@/components/FacilitySelect';
 import GroundSelect from '@/components/GroundSelect';
@@ -10,7 +10,7 @@ import TeamSelect from '@/components/TeamSelect';
 import PlayerCard from '@/components/PlayerCard';
 import RateBilling from '@/components/RateBilling';
 import ConfirmAttendanceDialog from '@/components/ConfirmAttendanceDialog';
-import SessionHistorySelect from '@/components/SessionHistorySelect';
+import CoachDashboard from '@/components/CoachDashboard';
 import MonthlyBilling from '@/components/MonthlyBilling';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, RotateCcw, FileText, Edit, LogOut } from 'lucide-react';
@@ -34,7 +34,7 @@ const getSessionHistory = (coachId: string): SessionHistory[] => {
 const saveSessionHistory = (coachId: string, session: SessionHistory) => {
   const history = getSessionHistory(coachId);
   history.unshift(session);
-  localStorage.setItem(`prakrida_history_${coachId}`, JSON.stringify(history.slice(0, 20)));
+  localStorage.setItem(`prakrida_history_${coachId}`, JSON.stringify(history.slice(0, 50)));
 };
 
 const getSavedSessions = (coachId: string): AttendanceSession[] => {
@@ -51,13 +51,14 @@ const saveAttendanceSession = (coachId: string, session: AttendanceSession) => {
 };
 
 const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
-  const [step, setStep] = useState(0); // 0 = history select
+  const [step, setStep] = useState(-1); // -1 = dashboard, 0+ = flow steps
   const [facilityId, setFacilityId] = useState('');
   const [groundId, setGroundId] = useState('');
   const [date, setDate] = useState('');
   const [timeSlotId, setTimeSlotId] = useState('');
   const [programId, setProgramId] = useState('');
   const [teamId, setTeamId] = useState('');
+  const [customTeamPlayers, setCustomTeamPlayers] = useState<Player[]>([]);
   const [attendance, setAttendance] = useState<Record<string, boolean>>({});
   const [submitted, setSubmitted] = useState(false);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
@@ -67,11 +68,10 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
   const [sessionHistory, setSessionHistory] = useState<SessionHistory[]>([]);
 
   const coach = coaches.find(c => c.id === coachId);
-  const teamPlayers = allPlayers.filter(p => p.teamId === teamId);
+  const teamPlayers = customTeamPlayers.length > 0 ? customTeamPlayers : allPlayers.filter(p => p.teamId === teamId);
 
   useEffect(() => {
     setSessionHistory(getSessionHistory(coachId));
-    // Greeting toast
     if (coach) {
       const firstName = coach.name.replace('Coach ', '');
       const hour = new Date().getHours();
@@ -79,18 +79,6 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
       toast(`Hey ${firstName}, ${greeting}! 🏟️`, { description: 'Have a great session today!' });
     }
   }, [coachId]);
-
-  // Auto-advance to step 1 if no history (avoid side-effect in render)
-  useEffect(() => {
-    if (step === 0 && sessionHistory.length === 0 && !submitted) {
-      // Small delay to let sessionHistory load
-      const timer = setTimeout(() => {
-        const history = getSessionHistory(coachId);
-        if (history.length === 0) setStep(1);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [step, sessionHistory.length, coachId, submitted]);
 
   const selectAllPresent = () => {
     const newAttendance: Record<string, boolean> = {};
@@ -133,7 +121,6 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
     setRecords(recs);
     setSubmitted(true);
 
-    // Save to history
     const historyEntry: SessionHistory = {
       id: `sh_${Date.now()}`,
       coachId,
@@ -147,7 +134,6 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
     };
     saveSessionHistory(coachId, historyEntry);
 
-    // Save attendance session for monthly billing
     const session: AttendanceSession = {
       facilityId,
       groundId,
@@ -163,13 +149,14 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
   };
 
   const resetFlow = () => {
-    setStep(0);
+    setStep(-1);
     setFacilityId('');
     setGroundId('');
     setDate('');
     setTimeSlotId('');
     setProgramId('');
     setTeamId('');
+    setCustomTeamPlayers([]);
     setAttendance({});
     setSubmitted(false);
     setRecords([]);
@@ -183,10 +170,19 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
     setTeamId(session.teamId);
     setTimeSlotId(session.timeSlotId);
     setFromHistory(true);
-    // Don't prefill date — it changes daily, let coach pick today's date
     setDate('');
-    setStep(3); // Jump to Date & Time step so coach confirms today's date/time
+    setStep(3);
   };
+
+  const handleCustomTeam = (teamName: string, playerIds: string[]) => {
+    const selectedPlayers = allPlayers.filter(p => playerIds.includes(p.id));
+    setCustomTeamPlayers(selectedPlayers);
+    setTeamId(`custom_${Date.now()}`);
+    setStep(6);
+  };
+
+  const facilityName = facilities.find(f => f.id === facilityId)?.name;
+  const groundName = grounds.find(g => g.id === groundId)?.name;
 
   if (showMonthlyBilling) {
     return (
@@ -194,6 +190,20 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
         sessions={getSavedSessions(coachId)}
         onBack={() => setShowMonthlyBilling(false)}
         onLogout={onLogout}
+      />
+    );
+  }
+
+  // Dashboard (step -1)
+  if (step === -1 && !submitted) {
+    return (
+      <CoachDashboard
+        coachId={coachId}
+        sessionHistory={sessionHistory}
+        onStartNewSession={() => setStep(1)}
+        onSelectHistory={handleHistorySelect}
+        onLogout={onLogout}
+        onViewBilling={() => setShowMonthlyBilling(true)}
       />
     );
   }
@@ -264,32 +274,36 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
       </div>
 
       <div className="max-w-md mx-auto p-4 pb-8">
-        {step === 0 && sessionHistory.length > 0 && (
-          <SessionHistorySelect
-            history={sessionHistory}
-            onSelectHistory={handleHistorySelect}
-            onStartFresh={() => setStep(1)}
-          />
-        )}
-
         {step === 1 && (
           <>
-            <StepHeader step={1} totalSteps={TOTAL_STEPS} title="Select Facility" subtitle="Choose the training location" />
-            <FacilitySelect onSelect={id => { setFacilityId(id); setStep(2); }} />
+            <StepHeader step={1} totalSteps={TOTAL_STEPS} title="Select Facility" subtitle="Choose the training location" onBack={() => setStep(-1)} />
+            <FacilitySelect selectedId={facilityId} onSelect={id => { setFacilityId(id); setStep(2); }} />
           </>
         )}
 
         {step === 2 && (
           <>
-            <StepHeader step={2} totalSteps={TOTAL_STEPS} title="Select Ground" subtitle={facilities.find(f => f.id === facilityId)?.name} onBack={() => setStep(1)} />
-            <GroundSelect facilityId={facilityId} onSelect={id => { setGroundId(id); setStep(3); }} />
+            <StepHeader step={2} totalSteps={TOTAL_STEPS} title="Select Ground" subtitle={facilityName} onBack={() => setStep(1)} />
+            <GroundSelect facilityId={facilityId} selectedId={groundId} onSelect={id => { setGroundId(id); setStep(3); }} />
           </>
         )}
 
         {step === 3 && (
           <>
-            <StepHeader step={3} totalSteps={TOTAL_STEPS} title="Date & Time" subtitle={fromHistory ? "Confirm today's date & time" : "When is this session?"} onBack={() => setStep(fromHistory ? 0 : 2)} />
-            <DateTimeSelect initialTimeSlotId={fromHistory ? timeSlotId : undefined} onSelect={(d, t) => { setDate(d); setTimeSlotId(t); setStep(fromHistory ? 6 : 4); }} />
+            <StepHeader
+              step={3}
+              totalSteps={TOTAL_STEPS}
+              title="Date & Time"
+              subtitle={fromHistory ? "Confirm today's date & time" : `${facilityName} → ${groundName}`}
+              onBack={() => setStep(fromHistory ? -1 : 2)}
+            />
+            <DateTimeSelect
+              initialTimeSlotId={fromHistory ? timeSlotId : undefined}
+              facilityId={facilityId}
+              groundId={groundId}
+              coachId={coachId}
+              onSelect={(d, t) => { setDate(d); setTimeSlotId(t); setStep(fromHistory ? 6 : 4); }}
+            />
           </>
         )}
 
@@ -303,7 +317,11 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
         {step === 5 && (
           <>
             <StepHeader step={5} totalSteps={TOTAL_STEPS} title="Select Team" subtitle={programs.find(p => p.id === programId)?.name} onBack={() => setStep(4)} />
-            <TeamSelect programId={programId} onSelect={id => { setTeamId(id); setStep(6); }} />
+            <TeamSelect
+              programId={programId}
+              onSelect={id => { setTeamId(id); setCustomTeamPlayers([]); setStep(6); }}
+              onCustomTeam={handleCustomTeam}
+            />
           </>
         )}
 
@@ -324,14 +342,19 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
               </div>
             )}
             <div className="space-y-2 mb-4">
-              {teamPlayers.map(player => (
-                <PlayerCard
-                  key={player.id}
-                  player={player}
-                  isPresent={!!attendance[player.id]}
-                  onToggle={toggleAttendance}
-                />
-              ))}
+              {teamPlayers.map(player => {
+                const siblings = getSiblings(player);
+                const siblingName = siblings.length > 0 ? siblings.map(s => s.name).join(', ') : undefined;
+                return (
+                  <PlayerCard
+                    key={player.id}
+                    player={player}
+                    isPresent={!!attendance[player.id]}
+                    onToggle={toggleAttendance}
+                    siblingName={siblingName}
+                  />
+                );
+              })}
             </div>
             {teamPlayers.length === 0 && (
               <p className="text-center text-muted-foreground py-8">No players found for this team</p>
@@ -350,6 +373,17 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
               onCancel={() => setShowConfirmDialog(false)}
               presentPlayers={teamPlayers.filter(p => attendance[p.id])}
               absentPlayers={teamPlayers.filter(p => !attendance[p.id])}
+              allPlayers={teamPlayers}
+              attendance={attendance}
+              onToggleAttendance={toggleAttendance}
+              facilityId={facilityId}
+              groundId={groundId}
+              date={date}
+              timeSlotId={timeSlotId}
+              programId={programId}
+              teamId={teamId}
+              coachName={coach?.name || ''}
+              onChangeGround={(gId) => setGroundId(gId)}
             />
           </>
         )}

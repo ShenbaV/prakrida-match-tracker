@@ -1,4 +1,5 @@
-import { Facility, Ground, TimeSlot, Program, Team, Player, RateCard, DiscountRule } from '@/types/prakrida';
+import { Facility, Ground, TimeSlot, Program, Team, Player, RateCard, DiscountRule, GroundBooking } from '@/types/prakrida';
+import { format } from 'date-fns';
 
 export const facilities: Facility[] = [
   { id: 'f1', name: 'Indiranagar Sports Complex', location: 'Indiranagar, Bangalore' },
@@ -54,23 +55,25 @@ export const players: Player[] = [
   // U-10 A Team
   { id: 'pl1', studentId: 'PRA-U10-001', name: 'Arjun Reddy', teamId: 'tm1', programId: 'p1', photoUrl: `${avatarBase}arjun`, age: 9, parentName: 'Suresh Reddy', parentPhone: '9876543210' },
   { id: 'pl2', studentId: 'PRA-U10-002', name: 'Meera Nair', teamId: 'tm1', programId: 'p1', photoUrl: `${avatarBase}meera`, age: 10, parentName: 'Priya Nair', parentPhone: '9876543211' },
-  { id: 'pl3', studentId: 'PRA-U10-003', name: 'Karthik Iyer', teamId: 'tm1', programId: 'p1', photoUrl: `${avatarBase}karthik`, age: 9, parentName: 'Ramesh Iyer', parentPhone: '9876543212', hasSibling: true },
-  { id: 'pl4', studentId: 'PRA-U10-004', name: 'Ananya Sharma', teamId: 'tm1', programId: 'p1', photoUrl: `${avatarBase}ananya`, age: 8, parentName: 'Vikram Sharma', parentPhone: '9876543213' },
+  { id: 'pl3', studentId: 'PRA-U10-003', name: 'Karthik Iyer', teamId: 'tm1', programId: 'p1', photoUrl: `${avatarBase}karthik`, age: 9, parentName: 'Ramesh Iyer', parentPhone: '9876543212', hasSibling: true, siblingGroupId: 'sib_iyer' },
+  { id: 'pl4', studentId: 'PRA-U10-004', name: 'Ananya Sharma', teamId: 'tm1', programId: 'p1', photoUrl: `${avatarBase}ananya`, age: 8, parentName: 'Vikram Sharma', parentPhone: '9876543213', hasSibling: true, siblingGroupId: 'sib_sharma' },
   { id: 'pl5', studentId: 'PRA-U10-005', name: 'Rohan Das', teamId: 'tm1', programId: 'p1', photoUrl: `${avatarBase}rohan`, age: 10, parentName: 'Amit Das', parentPhone: '9876543214' },
   // U-10 B Team
   { id: 'pl6', studentId: 'PRA-U10-006', name: 'Priya Rao', teamId: 'tm2', programId: 'p1', photoUrl: `${avatarBase}priya`, age: 9, parentName: 'Sanjay Rao', parentPhone: '9876543215' },
-  { id: 'pl7', studentId: 'PRA-U10-007', name: 'Dhruv Menon', teamId: 'tm2', programId: 'p1', photoUrl: `${avatarBase}dhruv`, age: 8, parentName: 'Anil Menon', parentPhone: '9876543216', hasSibling: true },
+  { id: 'pl7', studentId: 'PRA-U10-007', name: 'Dhruv Menon', teamId: 'tm2', programId: 'p1', photoUrl: `${avatarBase}dhruv`, age: 8, parentName: 'Anil Menon', parentPhone: '9876543216', hasSibling: true, siblingGroupId: 'sib_menon' },
   { id: 'pl8', studentId: 'PRA-U10-008', name: 'Sneha Pillai', teamId: 'tm2', programId: 'p1', photoUrl: `${avatarBase}sneha`, age: 10, parentName: 'Rajesh Pillai', parentPhone: '9876543217' },
+  { id: 'pl9a', studentId: 'PRA-U10-009', name: 'Riya Sharma', teamId: 'tm2', programId: 'p1', photoUrl: `${avatarBase}riyaS`, age: 9, parentName: 'Vikram Sharma', parentPhone: '9876543213', hasSibling: true, siblingGroupId: 'sib_sharma' },
   // U-14 A Team
   { id: 'pl9', studentId: 'PRA-U14-001', name: 'Vikram Singh', teamId: 'tm3', programId: 'p2', photoUrl: `${avatarBase}vikram`, age: 13, parentName: 'Harinder Singh', parentPhone: '9876543218' },
   { id: 'pl10', studentId: 'PRA-U14-002', name: 'Aditi Kulkarni', teamId: 'tm3', programId: 'p2', photoUrl: `${avatarBase}aditi`, age: 14, parentName: 'Shashi Kulkarni', parentPhone: '9876543219' },
   { id: 'pl11', studentId: 'PRA-U14-003', name: 'Ravi Kumar', teamId: 'tm3', programId: 'p2', photoUrl: `${avatarBase}ravi`, age: 12, parentName: 'Sunil Kumar', parentPhone: '9876543220', isSpecial: true },
   { id: 'pl12', studentId: 'PRA-U14-004', name: 'Ishaan Gupta', teamId: 'tm3', programId: 'p2', photoUrl: `${avatarBase}ishaan`, age: 13, parentName: 'Neha Gupta', parentPhone: '9876543221' },
   { id: 'pl13', studentId: 'PRA-U14-005', name: 'Tanvi Deshmukh', teamId: 'tm3', programId: 'p2', photoUrl: `${avatarBase}tanvi`, age: 14, parentName: 'Raj Deshmukh', parentPhone: '9876543222' },
-  { id: 'pl14', studentId: 'PRA-U14-006', name: 'Sahil Iyer', teamId: 'tm3', programId: 'p2', photoUrl: `${avatarBase}sahilI`, age: 12, parentName: 'Ramesh Iyer', parentPhone: '9876543212', hasSibling: true },
+  { id: 'pl14', studentId: 'PRA-U14-006', name: 'Sahil Iyer', teamId: 'tm3', programId: 'p2', photoUrl: `${avatarBase}sahilI`, age: 12, parentName: 'Ramesh Iyer', parentPhone: '9876543212', hasSibling: true, siblingGroupId: 'sib_iyer' },
   // U-14 B Team
   { id: 'pl15', studentId: 'PRA-U14-007', name: 'Neha Patel', teamId: 'tm4', programId: 'p2', photoUrl: `${avatarBase}nehaP`, age: 13, parentName: 'Dinesh Patel', parentPhone: '9876543223' },
   { id: 'pl16', studentId: 'PRA-U14-008', name: 'Aakash Joshi', teamId: 'tm4', programId: 'p2', photoUrl: `${avatarBase}aakash`, age: 14, parentName: 'Manish Joshi', parentPhone: '9876543224' },
+  { id: 'pl16a', studentId: 'PRA-U14-009', name: 'Nisha Menon', teamId: 'tm4', programId: 'p2', photoUrl: `${avatarBase}nishaM`, age: 13, parentName: 'Anil Menon', parentPhone: '9876543216', hasSibling: true, siblingGroupId: 'sib_menon' },
   // FFF Seniors Group 1
   { id: 'pl17', studentId: 'PRA-SR-001', name: 'Rajesh Menon', teamId: 'tm9', programId: 'p5', photoUrl: `${avatarBase}rajesh`, age: 35 },
   { id: 'pl18', studentId: 'PRA-SR-002', name: 'Suresh Hegde', teamId: 'tm9', programId: 'p5', photoUrl: `${avatarBase}suresh`, age: 42 },
@@ -109,3 +112,31 @@ export const coaches = [
   { id: 'c2', name: 'Coach Pradeep', phone: '9999000002', pin: '5678' },
   { id: 'c3', name: 'Coach Sunita', phone: '9999000003', pin: '9012' },
 ];
+
+// Mock bookings for conflict detection (today's date)
+const today = format(new Date(), 'yyyy-MM-dd');
+
+export const groundBookings: GroundBooking[] = [
+  { id: 'bk1', coachId: 'c2', coachName: 'Coach Pradeep', facilityId: 'f1', groundId: 'g1', date: today, timeSlotId: 't2' },
+  { id: 'bk2', coachId: 'c3', coachName: 'Coach Sunita', facilityId: 'f1', groundId: 'g1', date: today, timeSlotId: 't3' },
+  { id: 'bk3', coachId: 'c2', coachName: 'Coach Pradeep', facilityId: 'f2', groundId: 'g3', date: today, timeSlotId: 't4' },
+];
+
+// Helper: get siblings for a player
+export const getSiblings = (player: Player): Player[] => {
+  if (!player.siblingGroupId) return [];
+  return players.filter(p => p.siblingGroupId === player.siblingGroupId && p.id !== player.id);
+};
+
+// Helper: get sibling groups from a list of players
+export const getSiblingGroups = (playerList: Player[]): Record<string, Player[]> => {
+  const groups: Record<string, Player[]> = {};
+  playerList.forEach(p => {
+    if (p.siblingGroupId) {
+      if (!groups[p.siblingGroupId]) groups[p.siblingGroupId] = [];
+      groups[p.siblingGroupId].push(p);
+    }
+  });
+  // Only return groups with 2+ players
+  return Object.fromEntries(Object.entries(groups).filter(([, v]) => v.length >= 2));
+};
