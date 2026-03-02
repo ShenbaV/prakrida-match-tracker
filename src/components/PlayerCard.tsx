@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Check, XCircle } from 'lucide-react';
 import { Player } from '@/types/prakrida';
 import { cn } from '@/lib/utils';
 
@@ -17,7 +17,7 @@ const PlayerCard = ({ player, isPresent, onToggle }: PlayerCardProps) => {
       <div
         className={cn(
           'flex items-center gap-3 p-3 rounded-xl border transition-all duration-200',
-          isPresent ? 'bg-field-light border-primary/40' : 'bg-card border-border',
+          isPresent ? 'bg-primary/5 border-primary/40 ring-1 ring-primary/20' : 'bg-card border-border',
           player.isTemporary && 'border-dashed'
         )}
       >
@@ -48,13 +48,13 @@ const PlayerCard = ({ player, isPresent, onToggle }: PlayerCardProps) => {
         <button
           onClick={() => onToggle(player.id)}
           className={cn(
-            'px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 min-w-[72px]',
+            'w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 shrink-0 border-2',
             isPresent
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-secondary text-muted-foreground hover:bg-destructive/10 hover:text-destructive'
+              ? 'bg-primary text-primary-foreground border-primary shadow-md'
+              : 'bg-destructive/10 text-destructive border-destructive/30 hover:border-destructive/50'
           )}
         >
-          {isPresent ? 'Present' : 'Absent'}
+          {isPresent ? <Check className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
         </button>
       </div>
 

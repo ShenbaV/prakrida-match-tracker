@@ -14,6 +14,7 @@ import SessionHistorySelect from '@/components/SessionHistorySelect';
 import MonthlyBilling from '@/components/MonthlyBilling';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, RotateCcw, FileText, Edit, LogOut } from 'lucide-react';
+import { toast } from 'sonner';
 import prakridaLogo from '@/assets/prakrida-logo.png';
 
 interface AttendanceFlowProps {
@@ -70,6 +71,13 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
 
   useEffect(() => {
     setSessionHistory(getSessionHistory(coachId));
+    // Greeting toast
+    if (coach) {
+      const firstName = coach.name.replace('Coach ', '');
+      const hour = new Date().getHours();
+      const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+      toast(`Hey ${firstName}, ${greeting}! 🏟️`, { description: 'Have a great session today!' });
+    }
   }, [coachId]);
 
   // Auto-advance to step 1 if no history (avoid side-effect in render)
@@ -248,11 +256,10 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
           <span className="font-display font-bold text-sm text-foreground">Prakrida</span>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => setShowMonthlyBilling(true)} className="text-xs text-primary font-medium">
-            <FileText className="w-4 h-4 inline mr-1" />Billing
+          <span className="text-xs font-medium text-foreground">Hi {coach?.name.replace('Coach ', '')} 👋</span>
+          <button onClick={onLogout} className="text-xs text-destructive font-medium flex items-center gap-1">
+            <LogOut className="w-3 h-3" /> Logout
           </button>
-          <span className="text-xs text-muted-foreground">{coach?.name}</span>
-          <button onClick={onLogout} className="text-xs text-destructive font-medium">Logout</button>
         </div>
       </div>
 
@@ -334,7 +341,7 @@ const AttendanceFlow = ({ coachId, onLogout }: AttendanceFlowProps) => {
               disabled={presentCount === 0}
               className="w-full h-12 text-base font-semibold"
             >
-              Continue to Billing ({presentCount} present)
+              Continue ({presentCount} present)
             </Button>
 
             <ConfirmAttendanceDialog

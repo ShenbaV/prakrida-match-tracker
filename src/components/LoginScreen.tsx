@@ -31,8 +31,7 @@ const LoginScreen = ({ onLogin }: LoginScreenProps) => {
           <div className="w-20 h-20 rounded-2xl shadow-lg overflow-hidden ring-2 ring-primary-foreground/20 mb-5">
             <img src={prakridaLogo} alt="Prakrida Sports" className="w-full h-full object-cover" />
           </div>
-          <h1 className="text-2xl font-display font-bold text-primary-foreground tracking-tight">Prakrida Sports</h1>
-          <p className="text-primary-foreground/60 text-sm mt-1.5 font-medium">Coach Attendance Portal</p>
+          <h1 className="text-2xl font-display font-bold text-primary-foreground tracking-tight">Prakrida</h1>
         </div>
 
         {/* Login Card */}
